@@ -25,11 +25,6 @@ export default function SettingsScreen() {
     }, [load])
   );
 
-  async function changeCurrency(currency: string) {
-    const next = await updateSettings({ defaultCurrency: currency });
-    setSettings(next);
-  }
-
   async function savePaymentMethod() {
     const next = await updateSettings({ defaultPaymentMethod: paymentMethod.trim() || "银行卡" });
     setSettings(next);
@@ -77,15 +72,8 @@ export default function SettingsScreen() {
       <View className="mb-4 rounded-card bg-white p-4 shadow-sm">
         <Text className="mb-3 text-base font-semibold text-slate-900">偏好设置</Text>
         <Text className="mb-2 text-sm font-semibold text-slate-700">默认货币</Text>
-        <View className="mb-4 flex-row gap-2">
-          {["CNY", "AUD", "USD"].map((currency) => {
-            const active = settings?.defaultCurrency === currency;
-            return (
-              <Pressable key={currency} className={`rounded-full px-4 py-2 ${active ? "bg-blue-600" : "bg-slate-100"}`} onPress={() => changeCurrency(currency)}>
-                <Text className={`text-sm font-semibold ${active ? "text-white" : "text-slate-600"}`}>{currency}</Text>
-              </Pressable>
-            );
-          })}
+        <View className="mb-4 self-start rounded-full bg-blue-600 px-4 py-2">
+          <Text className="text-sm font-semibold text-white">CNY</Text>
         </View>
 
         <Text className="mb-2 text-sm font-semibold text-slate-700">默认支付方式</Text>

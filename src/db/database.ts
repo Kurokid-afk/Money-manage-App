@@ -74,19 +74,16 @@ export async function initializeDatabase() {
     );
   `);
 
-  const categoryCount = await db.getFirstAsync<{ count: number }>("SELECT COUNT(*) as count FROM categories");
-  if (!categoryCount?.count) {
-    for (const category of categoryRowsForSeed()) {
-      await db.runAsync(
-        "INSERT INTO categories (id, name, type, color, icon, createdAt) VALUES (?, ?, ?, ?, ?, ?)",
-        category.id,
-        category.name,
-        category.type,
-        category.color,
-        category.icon,
-        category.createdAt
-      );
-    }
+  for (const category of categoryRowsForSeed()) {
+    await db.runAsync(
+      "INSERT OR IGNORE INTO categories (id, name, type, color, icon, createdAt) VALUES (?, ?, ?, ?, ?, ?)",
+      category.id,
+      category.name,
+      category.type,
+      category.color,
+      category.icon,
+      category.createdAt
+    );
   }
 
   const settingsCount = await db.getFirstAsync<{ count: number }>("SELECT COUNT(*) as count FROM settings");

@@ -32,7 +32,7 @@ export function normalizeTransactionInput(input: TransactionInput, options: { au
     time: normalizeTime(input.time),
     type,
     amount,
-    currency: safeText(input.currency, "CNY"),
+    currency: "CNY",
     category,
     merchant,
     paymentMethod: safeText(input.paymentMethod) || null,

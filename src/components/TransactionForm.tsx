@@ -28,7 +28,7 @@ function fromTransaction(
     amount: transaction ? String(transaction.amount) : "",
     date: transaction?.date ?? todayText(),
     time: transaction?.time ?? currentTimeText(),
-    currency: transaction?.currency ?? defaults.defaultCurrency ?? "CNY",
+    currency: "CNY",
     category: transaction?.category ?? "",
     merchant: transaction?.merchant ?? "",
     paymentMethod: transaction?.paymentMethod ?? defaults.defaultPaymentMethod ?? "银行卡",
@@ -125,16 +125,8 @@ export function TransactionForm({
       </View>
 
       <Text className="mb-2 text-sm font-semibold text-slate-900">货币</Text>
-      <View className="mb-4 flex-row gap-2">
-        {["CNY", "AUD", "USD"].map((currency) => (
-          <Pressable
-            key={currency}
-            className={`rounded-full px-4 py-2 ${form.currency === currency ? "bg-blue-600" : "bg-slate-100"}`}
-            onPress={() => update("currency", currency)}
-          >
-            <Text className={`text-sm font-medium ${form.currency === currency ? "text-white" : "text-slate-600"}`}>{currency}</Text>
-          </Pressable>
-        ))}
+      <View className="mb-4 self-start rounded-full bg-blue-600 px-4 py-2">
+        <Text className="text-sm font-medium text-white">CNY</Text>
       </View>
 
       <Text className="mb-2 text-sm font-semibold text-slate-900">类别</Text>

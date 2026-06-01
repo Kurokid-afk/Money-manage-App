@@ -17,6 +17,7 @@ export const expenseCategories = [
   "社交",
   "日用品",
   "订阅服务",
+  "存钱",
   "其他"
 ];
 
@@ -36,6 +37,7 @@ export const defaultCategories: Array<Omit<Category, "id" | "createdAt">> = [
   { name: "社交", type: "expense", color: "#ec4899", icon: "people-outline" },
   { name: "日用品", type: "expense", color: "#84cc16", icon: "cube-outline" },
   { name: "订阅服务", type: "expense", color: "#6366f1", icon: "repeat-outline" },
+  { name: "存钱", type: "expense", color: "#0f766e", icon: "file-tray-full-outline" },
   { name: "其他", type: "expense", color: "#94a3b8", icon: "ellipse-outline" },
   { name: "工资", type: "income", color: "#16a34a", icon: "wallet-outline" },
   { name: "兼职", type: "income", color: "#22c55e", icon: "briefcase-outline" },
@@ -80,6 +82,10 @@ const rules = [
   {
     category: "健身",
     keywords: ["gym", "fitness", "protein", "supplement", "健身"]
+  },
+  {
+    category: "存钱",
+    keywords: ["saving", "savings", "deposit", "vault", "存钱", "储蓄", "存款", "定存", "理财", "余额宝"]
   }
 ];
 

@@ -8,4 +8,5 @@ date,time,type,amount,currency,category,merchant,payment_method,account,note,tag
 2026-05-31,12:00,expense,15.20,CNY,交通,Uber,银行卡,Commonwealth,ride,transport,sample,Uber ride
 2026-05-30,19:45,expense,45.60,CNY,游戏,Steam,银行卡,Commonwealth,game,game,sample,Steam game
 2026-05-30,11:20,income,1200.00,CNY,工资,Company,银行卡,Commonwealth,salary,income,sample,Company salary
+2026-05-29,20:00,expense,300.00,CNY,存钱,储蓄账户,银行卡,招商银行,每周存钱,saving,sample,weekly saving deposit
 2026-05-29,08:30,expense,9.90,CNY,,Manner Coffee,Apple Pay,Apple Pay,coffee,coffee,sample,Manner Coffee latte

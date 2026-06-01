@@ -30,6 +30,14 @@ export async function getSettings() {
       settings.createdAt,
       settings.updatedAt
     );
+  } else if (settings.defaultCurrency !== "CNY") {
+    settings = {
+      ...settings,
+      defaultCurrency: "CNY",
+      updatedAt: nowIso()
+    };
+
+    await db.runAsync("UPDATE settings SET defaultCurrency = ?, updatedAt = ? WHERE id = ?", settings.defaultCurrency, settings.updatedAt, settings.id);
   }
 
   return settings;
@@ -41,6 +49,7 @@ export async function updateSettings(input: Partial<Settings>) {
   const next: Settings = {
     ...current,
     ...input,
+    defaultCurrency: "CNY",
     updatedAt: nowIso()
   };
 

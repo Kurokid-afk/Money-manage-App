@@ -1,6 +1,6 @@
 # MoneyTrack
 
-MoneyTrack 是一个 Android 本地个人记账 App。数据保存在手机本地 SQLite，不需要服务器、登录、云同步或网页后台。
+MoneyTrack 是一个 Android 本地个人记账 App。数据保存在手机本地 SQLite，不需要服务器、登录、云同步或网页后台。当前按私人本地使用场景设计，金额统一按 CNY 记录。
 
 ## 技术栈
 
@@ -51,19 +51,22 @@ App 首次打开时会自动创建并初始化本地 SQLite 数据库：
 ## 导入 CSV
 
 1. 把账单截图交给 GPT 分析，让 GPT 输出 CSV。
-2. CSV 表头必须是：
+2. 推荐 CSV 表头是：
 
 ```csv
 date,time,type,amount,currency,category,merchant,payment_method,account,note,tags,source,raw_text
 ```
 
-3. 在 App 的「CSV 导入」页点击「选择 CSV 文件」。
-4. App 会预览每一行：
+3. 如果 GPT 输出的 CSV 表头不完全标准，App 会尽量兜底识别常见中文表头、无表头标准顺序、金额符号、正负号和收入/支出中文类型。
+4. 在 App 的「CSV 导入」页点击「选择 CSV 文件」。
+5. App 会预览每一行：
    - 绿色：正常
    - 黄色：疑似重复
    - 红色：错误
    - 灰色：完全重复，默认跳过
-5. 点击「确认导入」后写入手机本地 SQLite。
+6. 点击「确认导入」后写入手机本地 SQLite。
+
+导入时货币统一保存为 CNY；如果 CSV 中出现 AUD、USD 或其他币种字段，也会按 CNY 记账，不做汇率换算。分类里包含「存钱」，CSV 中出现 saving、deposit、储蓄、存款、存钱、理财等关键词时会自动归到这个去向。
 
 示例文件：`sample_transactions.csv`。
 
