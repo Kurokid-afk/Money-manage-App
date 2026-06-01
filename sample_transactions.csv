@@ -1,0 +1,11 @@
+date,time,type,amount,currency,category,merchant,payment_method,account,note,tags,source,raw_text
+2026-06-02,12:30,expense,18.50,CNY,餐饮,KFC,银行卡,Commonwealth,午餐,food,sample,KFC lunch
+2026-06-02,09:15,expense,7.80,CNY,交通,PTV,Apple Pay,Apple Pay,tram,transport,sample,PTV tram
+2026-06-01,18:20,income,500.00,CNY,兼职,Part-time Job,银行卡,Commonwealth,weekly pay,income,sample,part time weekly pay
+2026-06-01,13:10,expense,28.90,CNY,购物,Coles,银行卡,Commonwealth,groceries,shopping,sample,Coles groceries
+2026-06-01,10:05,expense,12.50,CNY,餐饮,Starbucks,Apple Pay,Apple Pay,coffee,coffee,sample,Starbucks coffee
+2026-05-31,21:30,expense,88.00,CNY,娱乐,Netflix,银行卡,Commonwealth,subscription,subscription,sample,Netflix subscription
+2026-05-31,12:00,expense,15.20,CNY,交通,Uber,银行卡,Commonwealth,ride,transport,sample,Uber ride
+2026-05-30,19:45,expense,45.60,CNY,游戏,Steam,银行卡,Commonwealth,game,game,sample,Steam game
+2026-05-30,11:20,income,1200.00,CNY,工资,Company,银行卡,Commonwealth,salary,income,sample,Company salary
+2026-05-29,08:30,expense,9.90,CNY,,Manner Coffee,Apple Pay,Apple Pay,coffee,coffee,sample,Manner Coffee latte

@@ -1,0 +1,44 @@
+{
+  "name": "moneytrack",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "typecheck": "tsc --noEmit",
+    "build:apk": "eas build -p android --profile preview"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "latest",
+    "@react-navigation/bottom-tabs": "latest",
+    "@react-navigation/native": "latest",
+    "expo": "latest",
+    "expo-document-picker": "latest",
+    "expo-file-system": "latest",
+    "expo-router": "latest",
+    "expo-sharing": "latest",
+    "expo-sqlite": "latest",
+    "expo-status-bar": "latest",
+    "nativewind": "latest",
+    "papaparse": "latest",
+    "react": "19.2.3",
+    "react-native": "latest",
+    "react-native-css-interop": "0.2.4",
+    "react-native-gifted-charts": "latest",
+    "react-native-reanimated": "4.3.1",
+    "react-native-safe-area-context": "5.7.0",
+    "react-native-screens": "latest",
+    "react-native-svg": "15.15.4",
+    "react-native-worklets": "0.8.3"
+  },
+  "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "latest",
+    "@types/papaparse": "latest",
+    "@types/react": "latest",
+    "babel-preset-expo": "56.0.14",
+    "eas-cli": "latest",
+    "tailwindcss": "3.4.17",
+    "typescript": "6.0.3"
+  }
+}

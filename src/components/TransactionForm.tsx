@@ -1,0 +1,193 @@
+import { useEffect, useMemo, useState } from "react";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import type { Category, Transaction, TransactionInput, TransactionType } from "@/types";
+import { currentTimeText, todayText, transactionTypes, typeLabels } from "@/utils/format";
+import { normalizeTransactionInput } from "@/utils/transaction";
+
+type FormState = {
+  type: TransactionType;
+  amount: string;
+  date: string;
+  time: string;
+  currency: string;
+  category: string;
+  merchant: string;
+  paymentMethod: string;
+  account: string;
+  note: string;
+  tags: string;
+  source: string;
+};
+
+function fromTransaction(
+  transaction?: Transaction | null,
+  defaults: { defaultCurrency?: string; defaultPaymentMethod?: string } = {}
+): FormState {
+  return {
+    type: transaction?.type ?? "expense",
+    amount: transaction ? String(transaction.amount) : "",
+    date: transaction?.date ?? todayText(),
+    time: transaction?.time ?? currentTimeText(),
+    currency: transaction?.currency ?? defaults.defaultCurrency ?? "CNY",
+    category: transaction?.category ?? "",
+    merchant: transaction?.merchant ?? "",
+    paymentMethod: transaction?.paymentMethod ?? defaults.defaultPaymentMethod ?? "银行卡",
+    account: transaction?.account ?? "",
+    note: transaction?.note ?? "",
+    tags: transaction?.tags ?? "",
+    source: transaction?.source ?? "manual"
+  };
+}
+
+export function TransactionForm({
+  categories,
+  initialTransaction,
+  defaultCurrency,
+  defaultPaymentMethod,
+  submitLabel = "保存",
+  onSubmit
+}: {
+  categories: Category[];
+  initialTransaction?: Transaction | null;
+  defaultCurrency?: string;
+  defaultPaymentMethod?: string;
+  submitLabel?: string;
+  onSubmit: (input: TransactionInput) => Promise<void>;
+}) {
+  const [form, setForm] = useState<FormState>(() =>
+    fromTransaction(initialTransaction, { defaultCurrency, defaultPaymentMethod })
+  );
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!initialTransaction) {
+      setForm(fromTransaction(null, { defaultCurrency, defaultPaymentMethod }));
+    }
+  }, [defaultCurrency, defaultPaymentMethod, initialTransaction]);
+
+  const visibleCategories = useMemo(() => {
+    const type = form.type === "income" || form.type === "refund" ? "income" : "expense";
+    return categories.filter((category) => category.type === type);
+  }, [categories, form.type]);
+
+  function update<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((current) => ({
+      ...current,
+      [key]: value
+    }));
+  }
+
+  async function handleSubmit() {
+    try {
+      setSubmitting(true);
+      const normalized = normalizeTransactionInput(
+        {
+          ...form,
+          amount: form.amount,
+          source: form.source || "manual"
+        },
+        {
+          autoCategoryEnabled: true
+        }
+      );
+      await onSubmit(normalized);
+      setForm(fromTransaction(null, { defaultCurrency, defaultPaymentMethod }));
+    } catch (error) {
+      Alert.alert("无法保存", error instanceof Error ? error.message : "请检查输入内容");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <View className="rounded-card border border-slate-100 bg-white p-4 shadow-sm">
+      <Text className="mb-2 text-sm font-semibold text-slate-900">类型</Text>
+      <View className="mb-4 flex-row flex-wrap gap-2">
+        {transactionTypes.map((type) => (
+          <Pressable
+            key={type}
+            className={`rounded-full px-4 py-2 ${form.type === type ? "bg-blue-600" : "bg-slate-100"}`}
+            onPress={() => update("type", type)}
+          >
+            <Text className={`text-sm font-medium ${form.type === type ? "text-white" : "text-slate-600"}`}>{typeLabels[type]}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Field label="金额" value={form.amount} onChangeText={(value) => update("amount", value)} keyboardType="decimal-pad" placeholder="0.00" />
+      <View className="flex-row gap-3">
+        <View className="flex-1">
+          <Field label="日期" value={form.date} onChangeText={(value) => update("date", value)} placeholder="YYYY-MM-DD" />
+        </View>
+        <View className="flex-1">
+          <Field label="时间" value={form.time} onChangeText={(value) => update("time", value)} placeholder="HH:mm" />
+        </View>
+      </View>
+
+      <Text className="mb-2 text-sm font-semibold text-slate-900">货币</Text>
+      <View className="mb-4 flex-row gap-2">
+        {["CNY", "AUD", "USD"].map((currency) => (
+          <Pressable
+            key={currency}
+            className={`rounded-full px-4 py-2 ${form.currency === currency ? "bg-blue-600" : "bg-slate-100"}`}
+            onPress={() => update("currency", currency)}
+          >
+            <Text className={`text-sm font-medium ${form.currency === currency ? "text-white" : "text-slate-600"}`}>{currency}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Text className="mb-2 text-sm font-semibold text-slate-900">类别</Text>
+      <View className="mb-4 flex-row flex-wrap gap-2">
+        {visibleCategories.map((category) => (
+          <Pressable
+            key={category.id}
+            className={`rounded-full px-3 py-2 ${form.category === category.name ? "bg-blue-600" : "bg-slate-100"}`}
+            onPress={() => update("category", category.name)}
+          >
+            <Text className={`text-xs font-medium ${form.category === category.name ? "text-white" : "text-slate-600"}`}>{category.name}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Field label="商家" value={form.merchant} onChangeText={(value) => update("merchant", value)} placeholder="未知商家" />
+      <Field label="支付方式" value={form.paymentMethod} onChangeText={(value) => update("paymentMethod", value)} placeholder="银行卡 / 支付宝 / 微信" />
+      <Field label="账户" value={form.account} onChangeText={(value) => update("account", value)} placeholder="Commonwealth / 招商银行" />
+      <Field label="备注" value={form.note} onChangeText={(value) => update("note", value)} placeholder="午餐、工资、订阅等" />
+      <Field label="标签" value={form.tags} onChangeText={(value) => update("tags", value)} placeholder="food,coffee" />
+      <Field label="来源" value={form.source} onChangeText={(value) => update("source", value)} placeholder="manual" />
+
+      <Pressable className={`mt-2 rounded-2xl py-4 ${submitting ? "bg-blue-300" : "bg-blue-600"}`} disabled={submitting} onPress={handleSubmit}>
+        <Text className="text-center text-base font-semibold text-white">{submitting ? "保存中..." : submitLabel}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  keyboardType = "default"
+}: {
+  label: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder?: string;
+  keyboardType?: "default" | "decimal-pad";
+}) {
+  return (
+    <View className="mb-4">
+      <Text className="mb-2 text-sm font-semibold text-slate-900">{label}</Text>
+      <TextInput
+        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900"
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="#94a3b8"
+        keyboardType={keyboardType}
+      />
+    </View>
+  );
+}
