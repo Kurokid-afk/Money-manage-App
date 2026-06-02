@@ -2,6 +2,12 @@
 
 MoneyTrack 是一个 Android 本地个人记账 App。数据保存在手机本地 SQLite，不需要服务器、登录、云同步或网页后台。当前按私人本地使用场景设计，金额统一按 CNY 记录。
 
+## APK 下载
+
+直接下载 Android 安装包：
+
+[下载 MoneyTrack APK](https://github.com/Kurokid-afk/Money-manage-App/raw/main/releases/MoneyTrack-1.0.0-arm64-release.apk)
+
 ## 技术栈
 
 - React Native + Expo + Expo Router
