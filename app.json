@@ -2,13 +2,14 @@
   "expo": {
     "name": "MoneyTrack",
     "slug": "moneytrack",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "scheme": "moneytrack",
     "userInterfaceStyle": "light",
     "platforms": ["android"],
     "android": {
       "package": "com.kurokid.moneytrack",
+      "versionCode": 2,
       "permissions": []
     },
     "plugins": ["expo-router", "expo-sqlite", "expo-document-picker"],

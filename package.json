@@ -1,6 +1,6 @@
 {
   "name": "moneytrack",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -17,6 +17,7 @@
     "expo": "latest",
     "expo-document-picker": "latest",
     "expo-file-system": "latest",
+    "expo-linear-gradient": "~56.0.4",
     "expo-router": "latest",
     "expo-sharing": "latest",
     "expo-sqlite": "latest",

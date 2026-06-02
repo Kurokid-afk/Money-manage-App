@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "../global.css";
 import { initializeDatabase } from "@/db/database";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
@@ -36,9 +37,9 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <AppErrorBoundary>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }} />
-    </>
+    </AppErrorBoundary>
   );
 }
