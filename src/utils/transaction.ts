@@ -2,6 +2,33 @@ import type { TransactionInput, TransactionType } from "@/types";
 import { autoCategorize } from "@/utils/categoryRules";
 import { normalizeDate, normalizeTime, parsePositiveAmount, safeText, transactionTypes } from "@/utils/format";
 
+function defaultCountInExpense(type: TransactionType) {
+  return type === "expense" || type === "fee";
+}
+
+function normalizeBooleanFlag(value: unknown, fallback: boolean) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return value === 1;
+  }
+
+  if (typeof value === "string") {
+    const text = value.trim().toLowerCase();
+    if (["1", "true", "yes", "y"].includes(text)) {
+      return true;
+    }
+
+    if (["0", "false", "no", "n"].includes(text)) {
+      return false;
+    }
+  }
+
+  return fallback;
+}
+
 export function normalizeTransactionInput(input: TransactionInput, options: { autoCategoryEnabled?: boolean } = {}) {
   const type = safeText(input.type) as TransactionType;
   if (!transactionTypes.includes(type)) {
@@ -24,7 +51,14 @@ export function normalizeTransactionInput(input: TransactionInput, options: { au
   const shouldAutoCategory = options.autoCategoryEnabled ?? true;
   const category =
     safeText(input.category) ||
-    (type === "income" ? "其他收入" : shouldAutoCategory ? autoCategorize({ merchant, note, rawText }) : "其他");
+    (type === "income" || type === "refund"
+      ? "其他收入"
+      : type === "investment"
+        ? "投资理财"
+        : shouldAutoCategory
+          ? autoCategorize({ merchant, note, rawText })
+          : "其他");
+  const countInExpense = normalizeBooleanFlag(input.countInExpense, defaultCountInExpense(type));
 
   return {
     id: input.id,
@@ -32,7 +66,7 @@ export function normalizeTransactionInput(input: TransactionInput, options: { au
     time: normalizeTime(input.time),
     type,
     amount,
-    currency: "CNY",
+    currency: safeText(input.currency, "CNY").toUpperCase(),
     category,
     merchant,
     paymentMethod: safeText(input.paymentMethod) || null,
@@ -40,6 +74,7 @@ export function normalizeTransactionInput(input: TransactionInput, options: { au
     note: note || null,
     tags: safeText(input.tags) || null,
     source: safeText(input.source, "manual"),
-    rawText: rawText || null
+    rawText: rawText || null,
+    countInExpense
   };
 }

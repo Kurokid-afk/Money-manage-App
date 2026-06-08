@@ -1,19 +1,17 @@
 import { useCallback, useState } from "react";
-import { Dimensions, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { LineChart, PieChart } from "react-native-gifted-charts";
+import { PieChart } from "react-native-gifted-charts";
 import { ChartCard, EmptyChart } from "@/components/ChartCard";
 import { PageTitle } from "@/components/PageTitle";
 import { Screen, Section } from "@/components/Screen";
 import { StatCard } from "@/components/StatCard";
 import { TransactionCard } from "@/components/TransactionCard";
 import { getDashboardData } from "@/db/stats";
-import { formatCurrency, monthLabel, shiftMonth, currentMonthText } from "@/utils/format";
+import { currentMonthText, formatCurrency, monthLabel, shiftMonth } from "@/utils/format";
 
 type DashboardData = Awaited<ReturnType<typeof getDashboardData>>;
-
-const chartWidth = Dimensions.get("window").width - 72;
 
 export default function DashboardScreen() {
   const [month, setMonth] = useState(currentMonthText());
@@ -30,12 +28,11 @@ export default function DashboardScreen() {
   );
 
   const hasCategoryData = Boolean(data?.categoryBreakdown.some((item) => item.value > 0));
-  const hasTrendData = Boolean(data?.recent7Days.some((item) => item.value > 0));
 
   return (
     <Screen>
       <View className="mb-4 flex-row items-center justify-between">
-        <PageTitle title="MoneyTrack" subtitle="本地个人记账" />
+        <PageTitle title="MoneyTrack" subtitle="消费、收入和资金流动一眼分清" />
         <View className="flex-row items-center gap-2">
           <MonthButton icon="chevron-back" onPress={() => setMonth((current) => shiftMonth(current, -1))} />
           <Text className="rounded-full bg-white px-3 py-2 text-sm font-semibold text-slate-800">{monthLabel(month)}</Text>
@@ -44,42 +41,44 @@ export default function DashboardScreen() {
       </View>
 
       <Section>
-        <View className="overflow-hidden rounded-[28px] bg-blue-600 p-5 shadow-sm">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-semibold text-blue-100">本月结余</Text>
-            <Ionicons name="eye-outline" color="#dbeafe" size={20} />
-          </View>
-          <Text className="mt-3 text-4xl font-bold text-white">{formatCurrency(data?.stats.balance ?? 0)}</Text>
-          <View className="mt-4 flex-row justify-between">
-            <Text className="text-sm font-semibold text-blue-100">收入 {formatCurrency(data?.stats.income ?? 0)}</Text>
-            <Text className="text-sm font-semibold text-blue-100">支出 {formatCurrency(data?.stats.expense ?? 0)}</Text>
-          </View>
+        <View className="rounded-[24px] bg-blue-600 p-5 shadow-sm">
+          <Text className="text-sm font-semibold text-blue-100">本月消费</Text>
+          <Text className="mt-2 text-4xl font-bold text-white">{formatCurrency(data?.stats.expense ?? 0)}</Text>
+          <Text className="mt-3 text-sm text-blue-100">只包含真正花掉的钱，默认不含转账和投资</Text>
         </View>
       </Section>
 
       <Section>
         <View className="flex-row flex-wrap justify-between gap-y-3">
-          <StatCard label="本月支出" value={formatCurrency(data?.stats.expense ?? 0)} tone="red" />
           <StatCard label="本月收入" value={formatCurrency(data?.stats.income ?? 0)} tone="green" />
-          <StatCard label="今日支出" value={formatCurrency(data?.stats.todayExpense ?? 0)} tone="slate" />
-          <StatCard label="最近记录" value={`${data?.recentTransactions.length ?? 0} 笔`} tone="blue" />
+          <StatCard label="净流出" value={formatCurrency(data?.stats.netOutflow ?? 0)} tone="red" />
+          <StatCard label="资金流动" value={formatCurrency(data?.stats.moneyFlow ?? 0)} tone="blue" />
+          <StatCard label="最近交易" value={`${Math.min(data?.recentTransactions.length ?? 0, 3)} 笔`} tone="slate" />
         </View>
       </Section>
 
       <Section>
         <View className="flex-row gap-3">
-          <QuickAction icon="add" label="手动记账" onPress={() => router.push("/add")} />
-          <QuickAction icon="cloud-upload-outline" label="导入 CSV" onPress={() => router.push("/import")} />
+          <QuickAction icon="receipt-outline" label="看明细" onPress={() => router.push("/transactions")} />
+          <QuickAction icon="pie-chart-outline" label="看分析" onPress={() => router.push("/analytics")} />
         </View>
       </Section>
 
-      <ChartCard title="支出分类占比">
+      <ChartCard title="最近 3 笔交易">
+        {(data?.recentTransactions.length ?? 0) > 0 ? (
+          data?.recentTransactions.slice(0, 3).map((transaction) => <TransactionCard key={transaction.id} transaction={transaction} />)
+        ) : (
+          <EmptyChart label="暂无交易记录" />
+        )}
+      </ChartCard>
+
+      <ChartCard title="本月分类占比">
         {hasCategoryData ? (
           <View className="flex-row items-center">
             <PieChart
               donut
-              radius={72}
-              innerRadius={44}
+              radius={70}
+              innerRadius={42}
               data={(data?.categoryBreakdown ?? []).map((item) => ({
                 value: item.value,
                 color: item.color,
@@ -88,7 +87,7 @@ export default function DashboardScreen() {
               centerLabelComponent={() => (
                 <View className="items-center">
                   <Text className="text-base font-bold text-slate-900">{formatCurrency(data?.stats.expense ?? 0)}</Text>
-                  <Text className="text-xs text-slate-500">总支出</Text>
+                  <Text className="text-xs text-slate-500">消费</Text>
                 </View>
               )}
             />
@@ -108,36 +107,6 @@ export default function DashboardScreen() {
           <EmptyChart />
         )}
       </ChartCard>
-
-      <ChartCard title="最近 7 天支出趋势">
-        {hasTrendData ? (
-          <LineChart
-            areaChart
-            curved
-            width={chartWidth}
-            height={180}
-            data={data?.recent7Days ?? []}
-            color="#2563eb"
-            startFillColor="#dbeafe"
-            endFillColor="#ffffff"
-            dataPointsColor="#2563eb"
-            yAxisColor="#e2e8f0"
-            xAxisColor="#e2e8f0"
-            yAxisTextStyle={{ color: "#64748b", fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: "#64748b", fontSize: 10 }}
-          />
-        ) : (
-          <EmptyChart />
-        )}
-      </ChartCard>
-
-      <ChartCard title="最近 10 条交易">
-        {(data?.recentTransactions.length ?? 0) > 0 ? (
-          data?.recentTransactions.map((transaction) => <TransactionCard key={transaction.id} transaction={transaction} />)
-        ) : (
-          <EmptyChart label="暂无交易记录" />
-        )}
-      </ChartCard>
     </Screen>
   );
 }
@@ -152,9 +121,9 @@ function MonthButton({ icon, onPress }: { icon: "chevron-back" | "chevron-forwar
 
 function QuickAction({ icon, label, onPress }: { icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void }) {
   return (
-    <Pressable className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4" onPress={onPress}>
-      <Ionicons name={icon} size={18} color="#ffffff" />
-      <Text className="text-sm font-semibold text-white">{label}</Text>
+    <Pressable className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-white py-4" onPress={onPress}>
+      <Ionicons name={icon} size={18} color="#2563eb" />
+      <Text className="text-sm font-semibold text-slate-800">{label}</Text>
     </Pressable>
   );
 }

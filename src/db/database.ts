@@ -33,6 +33,7 @@ export async function initializeDatabase() {
       tags TEXT,
       source TEXT,
       rawText TEXT,
+      count_in_expense INTEGER DEFAULT 1,
       createdAt TEXT,
       updatedAt TEXT
     );
@@ -72,6 +73,21 @@ export async function initializeDatabase() {
       errorRows INTEGER,
       createdAt TEXT
     );
+  `);
+
+  try {
+    await db.execAsync("ALTER TABLE transactions ADD COLUMN count_in_expense INTEGER DEFAULT 1;");
+  } catch {
+    // Column already exists in upgraded databases.
+  }
+
+  await db.execAsync(`
+    UPDATE transactions
+    SET count_in_expense = CASE
+      WHEN type IN ('transfer', 'investment', 'refund') THEN 0
+      ELSE 1
+    END
+    WHERE count_in_expense IS NULL;
   `);
 
   for (const category of categoryRowsForSeed()) {

@@ -17,7 +17,8 @@ type CanonicalKey =
   | "note"
   | "tags"
   | "source"
-  | "rawText";
+  | "rawText"
+  | "countInExpense";
 
 const standardImportHeaders = [
   "date",
@@ -32,7 +33,8 @@ const standardImportHeaders = [
   "note",
   "tags",
   "source",
-  "raw_text"
+  "raw_text",
+  "count_in_expense"
 ];
 
 const aliases: Record<CanonicalKey, string[]> = {
@@ -51,7 +53,8 @@ const aliases: Record<CanonicalKey, string[]> = {
   note: ["note", "memo", "remark", "comment", "comments", "description", "备注", "说明", "描述", "商品", "商品名称", "商品说明", "交易说明"],
   tags: ["tags", "tag", "标签"],
   source: ["source", "来源", "数据来源"],
-  rawText: ["raw_text", "raw text", "rawtext", "raw", "ocr", "原始文本", "原文", "截图文本"]
+  rawText: ["raw_text", "raw text", "rawtext", "raw", "ocr", "原始文本", "原文", "截图文本"],
+  countInExpense: ["count_in_expense", "count in expense", "计入消费", "是否计入消费"]
 };
 
 const aliasMap = new Map<string, CanonicalKey>(
@@ -355,11 +358,32 @@ function parseMoney(value?: string | null) {
   };
 }
 
+function normalizeCurrencyText(value: string | undefined, rowText: string) {
+  const text = `${value ?? ""} ${rowText}`.toLowerCase();
+  if (/aud|a\$|澳元/.test(text)) {
+    return "AUD";
+  }
+
+  if (/usd|\$|美元/.test(text)) {
+    return "USD";
+  }
+
+  return "CNY";
+}
+
 function normalizeTypeText(value: string | undefined, rowText: string, sign: -1 | 1 | null, amountSource: "amount" | "expense" | "income") {
   const text = `${value ?? ""} ${rowText}`.toLowerCase();
 
   if (/refund|reversal|退款|退回|退还|返还/.test(text)) {
     return "refund";
+  }
+
+  if (/\bfee\b|手续费|服务费/.test(text)) {
+    return "fee";
+  }
+
+  if (/investment|fund|finance|基金|理财|余额宝|零钱通|理财通|买入|赎回|定投/.test(text)) {
+    return "investment";
   }
 
   if (/transfer|转账|转出|转入|互转/.test(text)) {
@@ -395,13 +419,16 @@ export function rowToTransactionInput(row: Record<string, unknown>): Transaction
   const time = normalizeTimeText(normalized.time || normalized.datetime);
   const note = normalized.note || "";
   const rawText = normalized.rawText || rowText;
+  const currency = normalizeCurrencyText(normalized.currency, rowText);
+  const countInExpense = type === "expense" || type === "fee";
+  const countOverride = normalized.countInExpense ? /^(1|true|yes|y|是)$/i.test(normalized.countInExpense) : countInExpense;
 
   return {
     date,
     time,
     type,
     amount: money.amount,
-    currency: "CNY",
+    currency,
     category: normalized.category || "",
     merchant: normalized.merchant || "",
     paymentMethod: normalized.paymentMethod || "",
@@ -409,6 +436,7 @@ export function rowToTransactionInput(row: Record<string, unknown>): Transaction
     note,
     tags: normalized.tags || "",
     source: normalized.source || "csv",
-    rawText
+    rawText,
+    countInExpense: countOverride
   };
 }

@@ -1,12 +1,14 @@
 import type { TransactionType } from "@/types";
 
-export const transactionTypes: TransactionType[] = ["expense", "income", "transfer", "refund"];
+export const transactionTypes: TransactionType[] = ["expense", "income", "transfer", "investment", "refund", "fee"];
 
 export const typeLabels: Record<TransactionType, string> = {
   expense: "支出",
   income: "收入",
   transfer: "转账",
-  refund: "退款"
+  investment: "投资",
+  refund: "退款",
+  fee: "手续费"
 };
 
 export const currencySymbols: Record<string, string> = {
@@ -92,7 +94,7 @@ export function formatCurrency(amount: number, currency = "CNY") {
 
 export function formatSignedAmount(amount: number, type: string, currency = "CNY") {
   const formatted = formatCurrency(amount, currency);
-  if (type === "expense") {
+  if (type === "expense" || type === "fee") {
     return `-${formatted}`;
   }
 
@@ -100,16 +102,24 @@ export function formatSignedAmount(amount: number, type: string, currency = "CNY
     return `+${formatted}`;
   }
 
+  if (type === "transfer" || type === "investment") {
+    return `↔${formatted}`;
+  }
+
   return formatted;
 }
 
 export function amountColor(type: string) {
-  if (type === "expense") {
+  if (type === "expense" || type === "fee") {
     return "#dc2626";
   }
 
   if (type === "income" || type === "refund") {
     return "#16a34a";
+  }
+
+  if (type === "transfer" || type === "investment") {
+    return "#2563eb";
   }
 
   return "#334155";

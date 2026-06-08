@@ -3,6 +3,22 @@ import { Pressable, Text, View } from "react-native";
 import type { Transaction } from "@/types";
 import { amountColor, formatSignedAmount, typeLabels } from "@/utils/format";
 
+function typeBadge(type: Transaction["type"]) {
+  if (type === "refund") {
+    return "退款";
+  }
+
+  if (type === "transfer") {
+    return "资金流动";
+  }
+
+  if (type === "investment") {
+    return "投资";
+  }
+
+  return typeLabels[type];
+}
+
 export function TransactionCard({
   transaction,
   onEdit,
@@ -22,7 +38,7 @@ export function TransactionCard({
             {transaction.merchant || "未知商家"}
           </Text>
           <Text className="mt-1 text-xs text-slate-500">
-            {transaction.date} {transaction.time || ""} · {typeLabels[transaction.type]} · {transaction.category || "其他"}
+            {transaction.date} {transaction.time || ""} · {typeBadge(transaction.type)} · {transaction.category || "其他"}
           </Text>
         </View>
         <Text className="text-lg font-bold" style={{ color }}>

@@ -3,6 +3,11 @@ import { getDatabase } from "@/db/database";
 import { createId, nowIso } from "@/utils/format";
 import { normalizeTransactionInput } from "@/utils/transaction";
 
+const transactionSelect = `
+  id, date, time, type, amount, currency, category, merchant, paymentMethod, account, note, tags, source, rawText,
+  count_in_expense as countInExpense, createdAt, updatedAt
+`;
+
 function buildWhere(filters: TransactionFilters = {}) {
   const clauses: string[] = [];
   const params: Array<string | number> = [];
@@ -41,7 +46,7 @@ export async function getTransactions(filters: TransactionFilters = {}) {
   const db = await getDatabase();
   const { where, params } = buildWhere(filters);
   return db.getAllAsync<Transaction>(
-    `SELECT * FROM transactions ${where} ORDER BY date DESC, time DESC, createdAt DESC`,
+    `SELECT ${transactionSelect} FROM transactions ${where} ORDER BY date DESC, time DESC, createdAt DESC`,
     ...params
   );
 }
@@ -49,20 +54,20 @@ export async function getTransactions(filters: TransactionFilters = {}) {
 export async function getRecentTransactions(limit = 10) {
   const db = await getDatabase();
   return db.getAllAsync<Transaction>(
-    "SELECT * FROM transactions ORDER BY date DESC, time DESC, createdAt DESC LIMIT ?",
+    `SELECT ${transactionSelect} FROM transactions ORDER BY date DESC, time DESC, createdAt DESC LIMIT ?`,
     limit
   );
 }
 
 export async function getAllTransactions() {
   const db = await getDatabase();
-  return db.getAllAsync<Transaction>("SELECT * FROM transactions ORDER BY date DESC, time DESC, createdAt DESC");
+  return db.getAllAsync<Transaction>(`SELECT ${transactionSelect} FROM transactions ORDER BY date DESC, time DESC, createdAt DESC`);
 }
 
 export async function getDuplicateCandidates() {
   const db = await getDatabase();
   return db.getAllAsync<Transaction>(
-    "SELECT id, date, time, type, amount, merchant, paymentMethod, currency, category, account, note, tags, source, rawText, createdAt, updatedAt FROM transactions"
+    `SELECT ${transactionSelect} FROM transactions`
   );
 }
 
@@ -85,14 +90,15 @@ export async function createTransaction(input: TransactionInput, options: { auto
     tags: normalized.tags,
     source: normalized.source,
     rawText: normalized.rawText,
+    countInExpense: normalized.countInExpense,
     createdAt: timestamp,
     updatedAt: timestamp
   };
 
   await db.runAsync(
     `INSERT INTO transactions
-      (id, date, time, type, amount, currency, category, merchant, paymentMethod, account, note, tags, source, rawText, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, date, time, type, amount, currency, category, merchant, paymentMethod, account, note, tags, source, rawText, count_in_expense, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     transaction.id,
     transaction.date,
     transaction.time,
@@ -107,6 +113,7 @@ export async function createTransaction(input: TransactionInput, options: { auto
     transaction.tags,
     transaction.source,
     transaction.rawText,
+    transaction.countInExpense ? 1 : 0,
     transaction.createdAt,
     transaction.updatedAt
   );
@@ -131,7 +138,7 @@ export async function updateTransaction(id: string, input: TransactionInput, opt
   await db.runAsync(
     `UPDATE transactions
      SET date = ?, time = ?, type = ?, amount = ?, currency = ?, category = ?, merchant = ?, paymentMethod = ?,
-         account = ?, note = ?, tags = ?, source = ?, rawText = ?, updatedAt = ?
+         account = ?, note = ?, tags = ?, source = ?, rawText = ?, count_in_expense = ?, updatedAt = ?
      WHERE id = ?`,
     normalized.date,
     normalized.time,
@@ -146,6 +153,7 @@ export async function updateTransaction(id: string, input: TransactionInput, opt
     normalized.tags,
     normalized.source,
     normalized.rawText,
+    normalized.countInExpense ? 1 : 0,
     timestamp,
     id
   );

@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Alert } from "react-native";
-import { router, useFocusEffect } from "expo-router";
-import type { Category } from "@/types";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import type { Category, TransactionType } from "@/types";
 import { PageTitle } from "@/components/PageTitle";
 import { Screen } from "@/components/Screen";
 import { TransactionForm } from "@/components/TransactionForm";
@@ -13,6 +13,8 @@ import type { Settings } from "@/types";
 export default function AddScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const params = useLocalSearchParams<{ type?: TransactionType }>();
+  const initialType = params.type && ["expense", "income", "transfer", "investment", "refund", "fee"].includes(params.type) ? params.type : undefined;
 
   useFocusEffect(
     useCallback(() => {
@@ -30,6 +32,7 @@ export default function AddScreen() {
         categories={categories}
         defaultCurrency={settings?.defaultCurrency}
         defaultPaymentMethod={settings?.defaultPaymentMethod}
+        initialType={initialType}
         submitLabel="保存"
         onSubmit={async (input) => {
           const settings = await getSettings();

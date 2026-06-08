@@ -1,4 +1,4 @@
-import type { CsvImportResult, CsvPreviewRow, TransactionInput } from "@/types";
+import type { CsvImportOptions, CsvImportResult, CsvPreviewRow, TransactionInput } from "@/types";
 import { addImportBatch } from "@/db/importBatches";
 import { getSettings } from "@/db/settings";
 import { createTransactions, getDuplicateCandidates } from "@/db/transactions";
@@ -6,18 +6,45 @@ import { detectDuplicate } from "@/utils/duplicateCheck";
 import { parseCsv, rowToTransactionInput } from "@/utils/csv";
 import { normalizeTransactionInput } from "@/utils/transaction";
 
-export async function buildCsvPreview(fileName: string, content: string) {
+function applyImportOptions(input: TransactionInput, options: CsvImportOptions): TransactionInput {
+  const type = input.type;
+  const isFlow = type === "transfer" || type === "investment";
+  const countInExpense = isFlow && options.transferExcludedFromExpense !== false ? false : input.countInExpense;
+
+  return {
+    ...input,
+    countInExpense,
+    category:
+      options.fundSeparateStats && type === "investment"
+        ? "投资理财"
+        : type === "transfer"
+          ? input.category || "账户转移"
+          : input.category
+  };
+}
+
+export async function buildCsvPreview(fileName: string, content: string, options: CsvImportOptions = {}) {
   const rows = parseCsv(content);
   const settings = await getSettings();
-  const duplicateCheckEnabled = settings.duplicateCheckEnabled === 1;
-  const autoCategoryEnabled = settings.autoCategoryEnabled === 1;
+  const duplicateCheckEnabled = options.duplicateCheckEnabled ?? settings.duplicateCheckEnabled === 1;
+  const autoCategoryEnabled = options.autoCategoryEnabled ?? settings.autoCategoryEnabled === 1;
   const existing = duplicateCheckEnabled ? await getDuplicateCandidates() : [];
   const acceptedRows: TransactionInput[] = [];
 
   const previewRows: CsvPreviewRow[] = rows.map((row, index) => {
     try {
       const input = rowToTransactionInput(row);
-      const normalized = normalizeTransactionInput(input, {
+      if (options.onlyCny && input.currency && input.currency !== "CNY") {
+        return {
+          rowId: index + 1,
+          status: "duplicate" as const,
+          reason: "非 CNY 记录，已按设置跳过",
+          selected: false,
+          data: input
+        };
+      }
+
+      const normalized = normalizeTransactionInput(applyImportOptions(input, options), {
         autoCategoryEnabled
       });
       const data: TransactionInput = {
@@ -55,10 +82,10 @@ export async function buildCsvPreview(fileName: string, content: string) {
   };
 }
 
-export async function confirmCsvImport(fileName: string, rows: CsvPreviewRow[]): Promise<CsvImportResult> {
+export async function confirmCsvImport(fileName: string, rows: CsvPreviewRow[], options: CsvImportOptions = {}): Promise<CsvImportResult> {
   const settings = await getSettings();
-  const autoCategoryEnabled = settings.autoCategoryEnabled === 1;
-  const duplicateCheckEnabled = settings.duplicateCheckEnabled === 1;
+  const autoCategoryEnabled = options.autoCategoryEnabled ?? settings.autoCategoryEnabled === 1;
+  const duplicateCheckEnabled = options.duplicateCheckEnabled ?? settings.duplicateCheckEnabled === 1;
   const existing = duplicateCheckEnabled ? await getDuplicateCandidates() : [];
   const acceptedRows: TransactionInput[] = [];
   const toCreate: TransactionInput[] = [];
@@ -87,7 +114,12 @@ export async function confirmCsvImport(fileName: string, rows: CsvPreviewRow[]):
     }
 
     try {
-      const normalized = normalizeTransactionInput(row.data, {
+      if (options.onlyCny && row.data.currency && row.data.currency !== "CNY") {
+        skippedRows += 1;
+        continue;
+      }
+
+      const normalized = normalizeTransactionInput(applyImportOptions(row.data, options), {
         autoCategoryEnabled
       });
       const data: TransactionInput = {

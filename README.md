@@ -1,12 +1,14 @@
 # MoneyTrack
 
-MoneyTrack 是一个 Android 本地个人记账 App。数据保存在手机本地 SQLite，不需要服务器、登录、云同步或网页后台。当前按私人本地使用场景设计，金额统一按 CNY 记录。
+MoneyTrack 是一个 Android 本地个人记账 App。数据保存在手机本地 SQLite，不需要服务器、登录、云同步或网页后台。当前按私人本地使用场景设计，重点区分消费、收入、转账、投资、退款和手续费。
 
 ## APK 下载
 
 直接下载 Android 安装包：
 
 [下载 MoneyTrack APK](https://github.com/Kurokid-afk/Money-manage-App/raw/main/releases/MoneyTrack-1.0.1-arm64-release.apk)
+
+当前仓库代码已经升级到 1.1.0，下载链接仍指向现有的 1.0.1 APK。下次本地重新打包后，再替换为新的 1.1.0 安装包。
 
 ## 技术栈
 
@@ -60,11 +62,11 @@ App 首次打开时会自动创建并初始化本地 SQLite 数据库：
 2. 推荐 CSV 表头是：
 
 ```csv
-date,time,type,amount,currency,category,merchant,payment_method,account,note,tags,source,raw_text
+date,time,type,amount,currency,category,merchant,payment_method,account,note,tags,source,raw_text,count_in_expense
 ```
 
-3. 如果 GPT 输出的 CSV 表头不完全标准，App 会尽量兜底识别常见中文表头、无表头标准顺序、金额符号、正负号和收入/支出中文类型。
-4. 在 App 的「CSV 导入」页点击「选择 CSV 文件」。
+3. 如果 GPT 输出的 CSV 表头不完全标准，App 会尽量兜底识别常见中文表头、无表头标准顺序、金额符号、正负号和收入/支出/转账/投资/退款类型。
+4. 在 App 的中间加号里选择「导入账单」，按「选择文件 → 预览与匹配 → 确认导入」三步完成。
 5. App 会预览每一行：
    - 绿色：正常
    - 黄色：疑似重复
@@ -72,7 +74,16 @@ date,time,type,amount,currency,category,merchant,payment_method,account,note,tag
    - 灰色：完全重复，默认跳过
 6. 点击「确认导入」后写入手机本地 SQLite。
 
-导入时货币统一保存为 CNY；如果 CSV 中出现 AUD、USD 或其他币种字段，也会按 CNY 记账，不做汇率换算。分类里包含「存钱」，CSV 中出现 saving、deposit、储蓄、存款、存钱、理财等关键词时会自动归到这个去向。
+导入页提供「只导入 CNY」「自动分类」「重复检查」「转账不计入消费」「基金/理财单独统计」开关。转账、提现、充值、余额宝、零钱通、基金买入/赎回和理财通默认进入资金流动统计，不计入消费支出。
+
+支持的记录类型：
+
+- `expense`：真正花掉的钱，默认计入消费支出
+- `income`：工资、收益等收入
+- `transfer`：转账、提现、充值等资金流动，默认不计入消费支出
+- `investment`：基金、理财、余额宝、零钱通等投资流动，默认不计入消费支出
+- `refund`：退款，按收入方向展示，不计入消费支出
+- `fee`：手续费，默认计入消费支出
 
 示例文件：`sample_transactions.csv`。
 

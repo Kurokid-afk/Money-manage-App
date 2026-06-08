@@ -17,7 +17,8 @@ export const csvHeaders = [
   "note",
   "tags",
   "source",
-  "raw_text"
+  "raw_text",
+  "count_in_expense"
 ];
 
 function escapeCell(value: unknown) {
@@ -43,7 +44,8 @@ export function transactionsToCsv(transactions: Transaction[]) {
     transaction.note ?? "",
     transaction.tags ?? "",
     transaction.source ?? "",
-    transaction.rawText ?? ""
+    transaction.rawText ?? "",
+    transaction.countInExpense === true || transaction.countInExpense === 1 ? "true" : "false"
   ]);
 
   return [csvHeaders, ...rows].map((row) => row.map(escapeCell).join(",")).join("\n");

@@ -13,7 +13,7 @@ function firstInput(csv) {
   assert.equal(input.time, "08:30");
   assert.equal(input.type, "expense");
   assert.equal(input.amount, "18.50");
-  assert.equal(input.currency, "CNY");
+  assert.equal(input.currency, "AUD");
   assert.equal(input.merchant, "KFC");
 }
 

@@ -18,6 +18,8 @@ export const expenseCategories = [
   "日用品",
   "订阅服务",
   "存钱",
+  "投资理财",
+  "账户转移",
   "其他"
 ];
 
@@ -38,6 +40,8 @@ export const defaultCategories: Array<Omit<Category, "id" | "createdAt">> = [
   { name: "日用品", type: "expense", color: "#84cc16", icon: "cube-outline" },
   { name: "订阅服务", type: "expense", color: "#6366f1", icon: "repeat-outline" },
   { name: "存钱", type: "expense", color: "#0f766e", icon: "file-tray-full-outline" },
+  { name: "投资理财", type: "expense", color: "#2563eb", icon: "trending-up-outline" },
+  { name: "账户转移", type: "expense", color: "#64748b", icon: "swap-horizontal-outline" },
   { name: "其他", type: "expense", color: "#94a3b8", icon: "ellipse-outline" },
   { name: "工资", type: "income", color: "#16a34a", icon: "wallet-outline" },
   { name: "兼职", type: "income", color: "#22c55e", icon: "briefcase-outline" },
@@ -86,6 +90,14 @@ const rules = [
   {
     category: "存钱",
     keywords: ["saving", "savings", "deposit", "vault", "存钱", "储蓄", "存款", "定存", "理财", "余额宝"]
+  },
+  {
+    category: "投资理财",
+    keywords: ["fund", "基金", "理财通", "余额宝", "零钱通", "买入", "赎回", "定投", "收益"]
+  },
+  {
+    category: "账户转移",
+    keywords: ["transfer", "top up", "withdraw", "提现", "充值", "转账", "转入", "转出"]
   }
 ];
 

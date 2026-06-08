@@ -1,4 +1,4 @@
-export type TransactionType = "expense" | "income" | "transfer" | "refund";
+export type TransactionType = "expense" | "income" | "transfer" | "investment" | "refund" | "fee";
 
 export type Transaction = {
   id: string;
@@ -15,6 +15,7 @@ export type Transaction = {
   tags: string | null;
   source: string | null;
   rawText: string | null;
+  countInExpense: boolean | number;
   createdAt: string;
   updatedAt: string;
 };
@@ -34,6 +35,7 @@ export type TransactionInput = {
   tags?: string | null;
   source?: string | null;
   rawText?: string | null;
+  countInExpense?: boolean | number | null;
 };
 
 export type Category = {
@@ -87,4 +89,12 @@ export type CsvImportResult = {
   skippedRows: number;
   errorRows: number;
   suspectedRows: number;
+};
+
+export type CsvImportOptions = {
+  onlyCny?: boolean;
+  autoCategoryEnabled?: boolean;
+  duplicateCheckEnabled?: boolean;
+  transferExcludedFromExpense?: boolean;
+  fundSeparateStats?: boolean;
 };

@@ -2,10 +2,11 @@ import { useCallback, useMemo, useState } from "react";
 import { Alert, Modal, Pressable, Text, TextInput, View } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { CsvPreviewRow, Transaction, TransactionType } from "@/types";
+import type { Transaction, TransactionType } from "@/types";
 import { FilterChips } from "@/components/FilterChips";
 import { PageTitle } from "@/components/PageTitle";
 import { Screen } from "@/components/Screen";
+import { StatCard } from "@/components/StatCard";
 import { TransactionCard } from "@/components/TransactionCard";
 import { TransactionForm } from "@/components/TransactionForm";
 import { getCategories } from "@/db/categories";
@@ -14,9 +15,21 @@ import { deleteTransaction, getTransactions, updateTransaction } from "@/db/tran
 import { exportCsvFile } from "@/utils/csv";
 import { currentMonthText, formatCurrency, shiftMonth, typeLabels } from "@/utils/format";
 
+type FilterType = "all" | "expense" | "income" | "transfer" | "investment" | "refund";
+
+function countsInExpense(transaction: Transaction) {
+  return transaction.countInExpense === true || transaction.countInExpense === 1;
+}
+
+function visibleByType(transaction: Transaction, type: FilterType) {
+  if (type === "all") return true;
+  if (type === "expense") return (transaction.type === "expense" || transaction.type === "fee") && countsInExpense(transaction);
+  return transaction.type === type;
+}
+
 export default function TransactionsScreen() {
   const [month, setMonth] = useState(currentMonthText());
-  const [type, setType] = useState<TransactionType | "all">("all");
+  const [type, setType] = useState<FilterType>("all");
   const [category, setCategory] = useState("all");
   const [keyword, setKeyword] = useState("");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -25,17 +38,22 @@ export default function TransactionsScreen() {
 
   const load = useCallback(async () => {
     const [nextTransactions, nextCategories] = await Promise.all([
-      getTransactions({ month, type, category, keyword }),
+      getTransactions({ month, category, keyword }),
       getCategories()
     ]);
     setTransactions(nextTransactions);
     setCategories(nextCategories);
-  }, [category, keyword, month, type]);
+  }, [category, keyword, month]);
 
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load])
+  );
+
+  const visibleTransactions = useMemo(
+    () => transactions.filter((transaction) => visibleByType(transaction, type)),
+    [transactions, type]
   );
 
   const categoryOptions = useMemo(
@@ -49,7 +67,9 @@ export default function TransactionsScreen() {
     [categories]
   );
 
-  const totalExpense = transactions.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount, 0);
+  const totalExpense = transactions.filter((item) => visibleByType(item, "expense")).reduce((sum, item) => sum + item.amount, 0);
+  const totalIncome = transactions.filter((item) => item.type === "income" || item.type === "refund").reduce((sum, item) => sum + item.amount, 0);
+  const totalFlow = transactions.filter((item) => item.type === "transfer" || item.type === "investment").reduce((sum, item) => sum + item.amount, 0);
 
   async function handleDelete(transaction: Transaction) {
     Alert.alert("删除交易", `确定删除「${transaction.merchant || "未知商家"}」这条记录吗？`, [
@@ -67,16 +87,16 @@ export default function TransactionsScreen() {
 
   async function handleExport() {
     const fileName = `moneytrack_${month}_transactions.csv`;
-    const uri = await exportCsvFile(fileName, transactions);
+    const uri = await exportCsvFile(fileName, visibleTransactions);
     Alert.alert("导出完成", `CSV 已生成：${uri}`);
   }
 
   return (
     <Screen>
       <View className="mb-4 flex-row items-start justify-between">
-        <PageTitle title="交易记录" subtitle={`${transactions.length} 笔 · 支出 ${formatCurrency(totalExpense)}`} />
+        <PageTitle title="明细" subtitle={`${visibleTransactions.length} 笔 · 当前筛选`} />
         <Pressable className="rounded-full bg-blue-600 px-4 py-2" onPress={handleExport}>
-          <Text className="text-sm font-semibold text-white">导出 CSV</Text>
+          <Text className="text-sm font-semibold text-white">导出</Text>
         </Pressable>
       </View>
 
@@ -88,6 +108,13 @@ export default function TransactionsScreen() {
         <Pressable className="h-9 w-9 items-center justify-center rounded-full bg-white" onPress={() => setMonth((value) => shiftMonth(value, 1))}>
           <Ionicons name="chevron-forward" size={18} color="#334155" />
         </Pressable>
+      </View>
+
+      <View className="mb-4 flex-row flex-wrap justify-between gap-y-3">
+        <StatCard label="本月消费" value={formatCurrency(totalExpense)} tone="red" />
+        <StatCard label="收入" value={formatCurrency(totalIncome)} tone="green" />
+        <StatCard label="资金流动" value={formatCurrency(totalFlow)} tone="blue" />
+        <StatCard label="净流出" value={formatCurrency(totalExpense - totalIncome)} tone="slate" />
       </View>
 
       <View className="mb-4 flex-row items-center rounded-2xl bg-white px-4 py-2">
@@ -106,18 +133,19 @@ export default function TransactionsScreen() {
         value={type}
         options={[
           { label: "全部", value: "all" },
-          { label: typeLabels.expense, value: "expense" },
+          { label: "消费", value: "expense" },
           { label: typeLabels.income, value: "income" },
           { label: typeLabels.transfer, value: "transfer" },
+          { label: typeLabels.investment, value: "investment" },
           { label: typeLabels.refund, value: "refund" }
         ]}
-        onChange={setType}
+        onChange={(value) => setType(value as FilterType)}
       />
       <FilterChips label="类别" value={category} options={categoryOptions} onChange={setCategory} />
 
       <View className="mt-2">
-        {transactions.length > 0 ? (
-          transactions.map((transaction) => (
+        {visibleTransactions.length > 0 ? (
+          visibleTransactions.map((transaction) => (
             <TransactionCard
               key={transaction.id}
               transaction={transaction}

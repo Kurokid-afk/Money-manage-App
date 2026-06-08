@@ -11,6 +11,8 @@ web-build/
 .vercel/
 .turbo/
 .tools/
+.tmp/
+.cache/
 
 .env
 .env*.local
