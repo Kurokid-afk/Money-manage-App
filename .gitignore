@@ -13,6 +13,8 @@ web-build/
 .tools/
 .tmp/
 .cache/
+.android-sdk/
+.jdk17/
 
 .env
 .env*.local
